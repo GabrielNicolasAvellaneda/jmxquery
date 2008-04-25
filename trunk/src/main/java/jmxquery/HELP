@@ -1,6 +1,6 @@
 Usage: check_jmx -U url -O object_name -A attribute [-K compound_key] [-I attribute_info] [-J attribute_info_key] -w warn_limit -c crit_limit [-v[vvv]] [-help]
 
-, where options are:
+options are:
 
 -help 
 	Prints this page
