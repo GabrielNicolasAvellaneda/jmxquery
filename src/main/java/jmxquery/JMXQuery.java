@@ -27,7 +27,7 @@ import javax.management.remote.JMXServiceURL;
  * This plugin was found on nagiosexchange.  It lacked a username/password/role system.
  * 
  * @author unknown
- * @author Ryan Gravener (ryangravener@gmail.com)
+ * @author Ryan Gravener (<a href="http://ryangravener.com/app/contact">rgravener</a>)
  * 
  */
 public class JMXQuery {
@@ -275,7 +275,7 @@ public class JMXQuery {
 
 
 	private void printHelp(PrintStream out) {
-		InputStream is = getClass().getClassLoader().getResourceAsStream("HELP");
+		InputStream is = JMXQuery.class.getClassLoader().getResourceAsStream("jmxquery/HELP");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 		try{
 			while(true){
