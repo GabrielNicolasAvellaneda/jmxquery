@@ -36,13 +36,13 @@ public class JMXQuery {
 	private int verbatim;
 	private JMXConnector connector;
 	private MBeanServerConnection connection;
-	private int warning, critical;
+	private long warning, critical;
 	private String attribute, info_attribute;
 	private String attribute_key, info_key;
 	private String object;
 	private String username, password;
 	
-	private int checkData;
+	private long checkData;
 	private Object infoData;
 	
 	private static final int RETURN_OK = 0; // 	 The plugin was able to check the service and it appeared to be functioning properly
@@ -59,7 +59,7 @@ public class JMXQuery {
          JMXServiceURL jmxUrl = new JMXServiceURL(url);
                   
          if(username!=null) {
-        	 Map m = new HashMap();
+        	 Map<String, String[]> m = new HashMap<String,String[]>();
         	 m.put(JMXConnector.CREDENTIALS,new String[] {username,password});
         	 connector = JMXConnectorFactory.connect(jmxUrl,m);
          } else {
@@ -177,6 +177,7 @@ public class JMXQuery {
 		return status;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void report(CompositeDataSupport data, PrintStream out) {
 		CompositeType type = data.getCompositeType();
 		out.print(",");
@@ -190,7 +191,7 @@ public class JMXQuery {
 	}
 
 
-	private boolean compare(int level, boolean more) {
+	private boolean compare(long level, boolean more) {
 		if(more)
 			return checkData>=level;
 		else
@@ -255,9 +256,9 @@ public class JMXQuery {
 				}else if(option.startsWith("-v")){
 					this.verbatim = option.length()-1;
 				}else if(option.equals("-w")){
-					this.warning = Integer.parseInt(args[++i]);
+					this.warning = Long.parseLong(args[++i]);
 				}else if(option.equals("-c")){
-					this.critical = Integer.parseInt(args[++i]);
+					this.critical = Long.parseLong(args[++i]);
 				}else if(option.equals("-username")) {
 					this.username = args[++i];
 				}else if(option.equals("-password")) {

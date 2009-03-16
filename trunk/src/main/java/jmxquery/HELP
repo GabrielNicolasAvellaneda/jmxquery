@@ -27,16 +27,16 @@ options are:
 	verbatim level controlled as a number of v (optional)
 
 -w 
-	warning integer value
+	warning long value
 
 -c
-	critical integer value
+	critical long value
 	
 -username
 	monitorRole jmx username
 	
 -password 
-	monitorRole	jmx password
+	monitorRole jmx password
 
 Note that if warning level > critical, system checks object attribute value to be LESS THAN OR EQUAL warning, critical
 If warning level < critical, system checks object attribute value to be MORE THAN OR EQUAL warning, critical 
