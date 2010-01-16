@@ -36,13 +36,13 @@ public class JMXQuery {
 	private int verbatim;
 	private JMXConnector connector;
 	private MBeanServerConnection connection;
-	private long warning, critical;
+	private String warning, critical;
 	private String attribute, info_attribute;
 	private String attribute_key, info_key;
 	private String object;
 	private String username, password;
 	
-	private long checkData;
+	private Object checkData;
 	private Object infoData;
 	
 	private static final int RETURN_OK = 0; // 	 The plugin was able to check the service and it appeared to be functioning properly
@@ -143,10 +143,10 @@ public class JMXQuery {
 	private int report(PrintStream out)
 	{
 		int status;
-		if(compare( critical, warning<critical)){
+		if(compare( critical )){
 			status = RETURN_CRITICAL;			
 			out.print(CRITICAL_STRING);
-		}else if (compare( warning, warning<critical)){
+		}else if (compare( warning)){
 			status = RETURN_WARNING;
 			out.print(WARNING_STRING);
 		}else{
@@ -191,11 +191,22 @@ public class JMXQuery {
 	}
 
 
-	private boolean compare(long level, boolean more) {
-		if(more)
-			return checkData>=level;
-		else
-			return checkData<=level;	
+	private boolean compare(String level) {		
+		if(checkData instanceof Number) {
+			Number check = (Number)checkData;
+			if(check.doubleValue()==Math.floor(check.doubleValue())) {
+				return check.doubleValue()>=Double.parseDouble(level);
+			} else {
+				return check.longValue()>=Long.parseLong(level);
+			}
+		}
+		if(checkData instanceof String) {
+			return checkData.equals(level);
+		}
+		if(checkData instanceof Boolean) {
+			return checkData.equals(Boolean.parseBoolean(level));
+		}
+		throw new RuntimeException(level + "is not of type Number,String or Boolean");
 	}
 
 
@@ -205,9 +216,9 @@ public class JMXQuery {
 			CompositeDataSupport cds = (CompositeDataSupport) attr;
 			if(attribute_key==null)
 				throw new ParseError("Attribute key is null for composed data "+object);
-			checkData = parseData(cds.get(attribute_key));
+			checkData = cds.get(attribute_key);
 		}else{
-			checkData = parseData(attr);
+			checkData = attr;
 		}
 		
 		if(info_attribute!=null){
@@ -223,14 +234,6 @@ public class JMXQuery {
 		}
 		
 	}
-
-	private int parseData(Object o) {
-		if(o instanceof Number)
-			return ((Number)o).intValue();
-		else 
-			return Integer.parseInt(o.toString());
-	}
-
 
 	private void parse(String[] args) throws ParseError
 	{
@@ -256,9 +259,9 @@ public class JMXQuery {
 				}else if(option.startsWith("-v")){
 					this.verbatim = option.length()-1;
 				}else if(option.equals("-w")){
-					this.warning = Long.parseLong(args[++i]);
+					this.warning = args[++i];
 				}else if(option.equals("-c")){
-					this.critical = Long.parseLong(args[++i]);
+					this.critical = args[++i];
 				}else if(option.equals("-username")) {
 					this.username = args[++i];
 				}else if(option.equals("-password")) {
