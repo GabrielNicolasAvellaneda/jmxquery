@@ -83,24 +83,23 @@ public class JMXQuery {
 	public static void main(String[] args) {
 		
 			JMXQuery query = new JMXQuery();
-			
+			int status;
 			try{
 				query.parse(args);
 				query.connect();
 				query.execute();
-				int status = query.report(System.out);
-				System.exit(status);
+				status = query.report(System.out);
+
 			}catch(Exception ex){
-				int status = query.report(ex, System.out);
-				System.exit(status);
+				status = query.report(ex, System.out);
 			}finally{
 				try {
 					query.disconnect();
 				} catch (IOException e) {
-					int status = query.report(e, System.out);
-					System.exit(status);
+					status = query.report(e, System.out);					
 				}
-			}			
+			}	
+			System.exit(status);
 		}
 
 	private int report(Exception ex, PrintStream out)
