@@ -6,7 +6,7 @@
 	<packaging>jar</packaging>
 	<version>1.0-SNAPSHOT</version>
 	<name>jmxquery</name>
-	<url>http://code.google.com/p/jmxquery</url>	
+	<url>http://code.google.com/p/jmxquery</url>
 	<build>
 		<plugins>
 			<plugin>
@@ -31,6 +31,11 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<configuration>
 					<finalName>${project.name}</finalName>
+					<archive>
+						<manifest>
+							<mainClass>jmxquery.JMXQuery</mainClass>
+						</manifest>
+					</archive>
 				</configuration>
 			</plugin>
 		</plugins>
