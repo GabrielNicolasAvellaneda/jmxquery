@@ -1,13 +1,13 @@
 #labels Phase-Implementation
-# Compiling the jmxquery nagios plugin
+= Compiling the jmxquery nagios plugin =
 
-= Requirements =
+== Requirements ==
   * jdk (javac)
   * Install apache-maven-3.0.3, or newer.
   * svn, wget, tar
 
 
-== Maven install ==
+=== Maven install ===
 {{{
  mkdir ~/Downloads
  cd ~/Downloads
@@ -22,13 +22,13 @@
   cd jmxquery-read-only
 
 }}}
-== JMXquery maven compile command ==
+=== JMXquery maven compile command ===
 {{{
   ~/Downloads/apache-maven-3.0.3/bin/mvn compile 
 }}}
   (Ensure you are in the jmxquery-read-only directory)
 
-== JMXquery maven package command ==
+=== JMXquery maven package command ===
 {{{
   ~/Downloads/apache-maven-3.0.3/bin/mvn package 
 }}}
