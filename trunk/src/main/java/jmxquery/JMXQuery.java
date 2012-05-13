@@ -157,15 +157,17 @@ public class JMXQuery {
 		if(infoData==null || verbatim>=2){
 			out.print(' ');
 			if(attribute_key!=null)
-				out.print(attribute+'.'+attribute_key+" is "+checkData);
+				out.print(attribute+'.'+attribute_key+"="+checkData);
+				if ( checkData instanceof Number) {
+					out.print (" | "+attribute+'.'+attribute_key+"="+checkData);
+				}
 			else {
 				out.print(attribute+"="+checkData);
 				if ( checkData instanceof Number) {
-					out.print ("|"+attribute+"="+checkData);
+					out.print (" | "+attribute+"="+checkData);
 				}
 				shown=true;
 			}
-			
 		}
 			
 		if(!shown && infoData!=null){
