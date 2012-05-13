@@ -142,10 +142,10 @@ public class JMXQuery {
 	private int report(PrintStream out)
 	{
 		int status;
-		if(compare( critical )){
+		if(critical != null && compare( critical )){
 			status = RETURN_CRITICAL;			
 			out.print(CRITICAL_STRING);
-		}else if (compare( warning)){
+		}else if (warning != null && compare( warning)){
 			status = RETURN_WARNING;
 			out.print(WARNING_STRING);
 		}else{
@@ -159,7 +159,10 @@ public class JMXQuery {
 			if(attribute_key!=null)
 				out.print(attribute+'.'+attribute_key+" is "+checkData);
 			else {
-				out.print(attribute+" is "+checkData);
+				out.print(attribute+"="+checkData);
+				if ( checkData instanceof Number) {
+					out.print ("|"+attribute+"="+checkData);
+				}
 				shown=true;
 			}
 			
