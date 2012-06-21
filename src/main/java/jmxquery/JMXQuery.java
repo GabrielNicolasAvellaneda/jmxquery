@@ -1,14 +1,5 @@
 package jmxquery;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
@@ -16,6 +7,10 @@ import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 
 /**
@@ -28,7 +23,7 @@ import javax.management.remote.JMXServiceURL;
  * 
  * @author unknown
  * @author Ryan Gravener (<a href="http://ryangravener.com/app/contact">rgravener</a>)
- * 
+ * @author Per Huss mr.per.huss (a) gmail.com
  */
 public class JMXQuery {
 
@@ -37,8 +32,9 @@ public class JMXQuery {
 	private JMXConnector connector;
 	private MBeanServerConnection connection;
 	private String warning, critical;
-	private String attribute, info_attribute;
-	private String attribute_key, info_key;
+	private String attributeName, infoAttribute;
+	private String attributeKey, infoKey;
+    private String methodName;
 	private String object;
 	private String username, password;
 	
@@ -156,21 +152,21 @@ public class JMXQuery {
         boolean shown = false;
         if(infoData==null || verbatim>=2){
             out.print(' ');
-            if(attribute_key!=null) {
-                out.print(attribute+'.'+attribute_key+"="+checkData);
+            if(attributeKey !=null) {
+                out.print(attributeName +'.'+ attributeKey +"="+checkData);
                 if ( checkData instanceof Number) {
-                    out.print (" | "+attribute+'.'+attribute_key+"="+checkData);
+                    out.print (" | "+ attributeName +'.'+ attributeKey +"="+checkData);
                 }
             }
             else {
-                out.print(attribute+"="+checkData);
+                out.print(attributeName +"="+checkData);
                 if ( checkData instanceof Number) {
-                    out.print (" | "+attribute+"="+checkData);
+                    out.print (" | "+ attributeName +"="+checkData);
                 }
                 shown=true;
             }
         }
-			
+
 		if(!shown && infoData!=null){
 			if(infoData instanceof CompositeDataSupport)
 				report((CompositeDataSupport)infoData, out);
@@ -215,29 +211,32 @@ public class JMXQuery {
 	}
 
 
-	private void execute() throws Exception{
-		Object attr = connection.getAttribute(new ObjectName(object), attribute);
-		if(attr instanceof CompositeDataSupport){
-			CompositeDataSupport cds = (CompositeDataSupport) attr;
-			if(attribute_key==null)
-				throw new ParseError("Attribute key is null for composed data "+object);
-			checkData = cds.get(attribute_key);
-		}else{
-			checkData = attr;
+	private void execute() throws Exception
+    {
+		Object value = attributeName != null
+                ? connection.getAttribute(new ObjectName(object), attributeName)
+                : connection.invoke(new ObjectName(object), methodName, null, null);
+		if(value instanceof CompositeDataSupport) {
+            if(attributeKey ==null) {
+                throw new ParseError("Attribute key is null for composed data "+object);
+            }
+            checkData = ((CompositeDataSupport) value).get(attributeKey);
+		}
+        else {
+			checkData = value;
 		}
 		
-		if(info_attribute!=null){
-			Object info_attr = info_attribute.equals(attribute) ? 
-									attr : 
-									connection.getAttribute(new ObjectName(object), info_attribute);
-			if(info_key!=null && (info_attr instanceof CompositeDataSupport) && verbatim<4){
-				CompositeDataSupport cds = (CompositeDataSupport) attr;
-				infoData = cds.get(info_key);
-			}else{
-				infoData = info_attr;
+		if(infoAttribute !=null){
+			Object infoValue = infoAttribute.equals(attributeName)
+                    ? value :
+                    connection.getAttribute(new ObjectName(object), infoAttribute);
+			if(infoKey !=null && (infoValue instanceof CompositeDataSupport) && verbatim<4){
+                infoData = ((CompositeDataSupport) value).get(infoKey);
+			}
+            else {
+				infoData = infoValue;
 			}
 		}
-		
 	}
 
 	private void parse(String[] args) throws ParseError
@@ -249,37 +248,51 @@ public class JMXQuery {
 				{
 					printHelp(System.out);
 					System.exit(RETURN_UNKNOWN);
-				}else if(option.equals("-U")){
-					this.url = args[++i];
-				}else if(option.equals("-O")){
-					this.object = args[++i];
-				}else if(option.equals("-A")){
-					this.attribute = args[++i];
-				}else if(option.equals("-I")){
-					this.info_attribute = args[++i];
-				}else if(option.equals("-J")){
-					this.info_key = args[++i];
-				}else if(option.equals("-K")){
-					this.attribute_key = args[++i];
-				}else if(option.startsWith("-v")){
-					this.verbatim = option.length()-1;
-				}else if(option.equals("-w")){
-					this.warning = args[++i];
-				}else if(option.equals("-c")){
-					this.critical = args[++i];
-				}else if(option.equals("-username")) {
-					this.username = args[++i];
-				}else if(option.equals("-password")) {
-					this.password = args[++i];
+				}
+                else if(option.equals("-U")) {
+					url = args[++i];
+				}
+                else if(option.equals("-O")) {
+					object = args[++i];
+				}
+                else if(option.equals("-A")) {
+					attributeName = args[++i];
+				}
+                else if(option.equals("-I")) {
+					infoAttribute = args[++i];
+				}
+                else if(option.equals("-J")) {
+					infoKey = args[++i];
+				}
+                else if(option.equals("-K")) {
+					attributeKey = args[++i];
+				}
+                else if(option.equals("-M")) {
+                    methodName = args[++i];
+                }
+                else if(option.startsWith("-v")) {
+					verbatim = option.length()-1;
+				}
+                else if(option.equals("-w")) {
+					warning = args[++i];
+				}
+                else if(option.equals("-c")) {
+					critical = args[++i];
+				}
+                else if(option.equals("-username")) {
+					username = args[++i];
+				}
+                else if(option.equals("-password")) {
+					password = args[++i];
 				}
 			}
 			
-			if(url==null || object==null || attribute==null)
-				throw new Exception("Required options not specified");
-		}catch(Exception e){
+            if(url == null || object == null || (attributeName == null && methodName == null))
+                throw new Exception("Required options not specified");
+		}
+        catch(Exception e) {
 			throw new ParseError(e);
 		}
-		
 	}
 
 
@@ -303,7 +316,4 @@ public class JMXQuery {
 			}
 		}	
 	}
-
-
-
 }
