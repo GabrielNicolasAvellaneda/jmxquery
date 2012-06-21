@@ -4,7 +4,7 @@
 	<groupId>jmxquery</groupId>
 	<artifactId>jmxquery</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.2-SNAPSHOT</version>
 	<name>jmxquery</name>
 	<url>http://code.google.com/p/jmxquery</url>
 	<build>
