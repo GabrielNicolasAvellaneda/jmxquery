@@ -20,14 +20,14 @@
       <includes>
         <include>*.jar</include>
       </includes>
-		<outputDirectory></outputDirectory>
+		<outputDirectory/>
     </fileSet>
     <fileSet>
       <directory>${basedir}/src/main/script</directory>
       <includes>
         <include>*</include>
       </includes>
-		<outputDirectory></outputDirectory>
+		<outputDirectory/>
     </fileSet>
   </fileSets>
 </assembly>
