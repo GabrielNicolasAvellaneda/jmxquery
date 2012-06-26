@@ -103,7 +103,8 @@ public class JMXQuery
 	
 	
 	/**
-	 * @param args
+     * The main method, invoked when running from command line.
+	 * @param args The supplied parameters.
 	 */
 	public static void main(String[] args)
     {
@@ -125,26 +126,22 @@ public class JMXQuery
 		}
 	}
 
-	private void reportException(Exception ex, PrintStream out) {
+	@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    private void reportException(Exception ex, PrintStream out)
+    {
+        out.print(verbatim < 2
+                ? rootCause(ex).getMessage()
+                : ex.getMessage() + " connecting to " + object + " by URL " + url);
 
-		if(verbatim<2)
-			out.print(rootCause(ex).getMessage());
-		else{
-			out.print(ex.getMessage()+" connecting to "+object+" by URL "+url);
-		}
-	
-		
 		if(verbatim>=3)		
 			ex.printStackTrace(out);
-
 	}
 
-
-	private static Throwable rootCause(Throwable ex) {
-		if(ex.getCause()==null)
-			return ex;
-		return rootCause(ex.getCause());
-	}
+	@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    private static Throwable rootCause(Throwable ex)
+    {
+        return ex.getCause() == null ? ex : rootCause(ex.getCause());
+    }
 
 
 	private int report(PrintStream out)
