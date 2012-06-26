@@ -5,7 +5,6 @@ import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.*;
 import java.util.HashMap;
@@ -25,9 +24,12 @@ import java.util.Map;
  * @author Ryan Gravener (<a href="http://ryangravener.com/app/contact">rgravener</a>)
  * @author Per Huss mr.per.huss (a) gmail.com
  */
-public class JMXQuery {
+public class JMXQuery
+{
+    private final JMXProvider jmxProvider;
+    private final PrintStream out;
 
-	private String url;
+    private String url;
 	private int verbatim;
 	private JMXConnector connector;
 	private MBeanServerConnection connection;
@@ -48,57 +50,67 @@ public class JMXQuery {
 	private static final int RETURN_CRITICAL = 2; // The plugin detected that either the service was not running or it was above some "critical" threshold
 	private static final String CRITICAL_STRING = "JMX CRITICAL -"; 
 	private static final int RETURN_UNKNOWN = 3; // Invalid command line arguments were supplied to the plugin or low-level failures internal to the plugin (such as unable to fork, or open a tcp socket) that prevent it from performing the specified operation. Higher-level errors (such as name resolution errors, socket timeouts, etc) are outside of the control of plugins and should generally NOT be reported as UNKNOWN states.
-	private static final String UNKNOWN_STRING = "JMX UNKNOWN"; 
+	private static final String UNKNOWN_STRING = "JMX UNKNOWN";
 
-	private void connect() throws IOException
+    public JMXQuery(JMXProvider jmxProvider, PrintStream out)
+    {
+        this.jmxProvider = jmxProvider;
+        this.out = out;
+    }
+
+    public int runCommand(String... args)
+    {
+        try {
+            parse(args);
+            connect();
+            execute();
+            return report(out);
+
+        }
+        catch(Exception ex) {
+            return report(ex, out);
+        }
+        finally {
+            try {
+                disconnect();
+            }
+            catch (IOException ignore) { }
+        }
+    }
+
+    private void connect() throws IOException
 	{
          JMXServiceURL jmxUrl = new JMXServiceURL(url);
                   
          if(username!=null) {
         	 Map<String, String[]> m = new HashMap<String,String[]>();
         	 m.put(JMXConnector.CREDENTIALS,new String[] {username,password});
-        	 connector = JMXConnectorFactory.connect(jmxUrl,m);
+        	 connector = jmxProvider.getConnector(jmxUrl, m);
          } else {
-        	 connector = JMXConnectorFactory.connect(jmxUrl);
+        	 connector = jmxProvider.getConnector(jmxUrl, null);
          }
          connection = connector.getMBeanServerConnection();
 	}
 	
 
-	private void disconnect() throws IOException {
-		if(connector!=null){
-			connector.close();
-			connector = null;
-		}
+	private void disconnect() throws IOException
+    {
+        if(connector!=null)
+        {
+            connector.close();
+        }
 	}
 	
 	
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		
-			JMXQuery query = new JMXQuery();
-			int status;
-			try{
-				query.parse(args);
-				query.connect();
-				query.execute();
-				status = query.report(System.out);
+	public static void main(String[] args)
+    {
+        System.exit(new JMXQuery(new DefaultJMXProvider(), System.out).runCommand(args));
+    }
 
-			}catch(Exception ex){
-				status = query.report(ex, System.out);
-			}finally{
-				try {
-					query.disconnect();
-				} catch (IOException e) {
-					status = query.report(e, System.out);					
-				}
-			}	
-			System.exit(status);
-		}
-
-	private int report(Exception ex, PrintStream out)
+    private int report(Exception ex, PrintStream out)
 	{
 		if(ex instanceof ParseError){
 			out.print(UNKNOWN_STRING+" ");
