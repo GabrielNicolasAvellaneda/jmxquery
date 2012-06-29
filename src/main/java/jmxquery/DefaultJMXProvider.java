@@ -14,6 +14,6 @@ public class DefaultJMXProvider implements JMXProvider
     @Override
     public JMXConnector getConnector(JMXServiceURL url, Map<String, ?> env) throws IOException
     {
-        return JMXConnectorFactory.connect(url);
+        return JMXConnectorFactory.connect(url, env);
     }
 }

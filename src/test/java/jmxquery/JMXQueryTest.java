@@ -1,5 +1,7 @@
 package jmxquery;
 
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -10,14 +12,17 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
 
+import static javax.management.remote.JMXConnector.CREDENTIALS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests for the JMXQuery class.
@@ -100,5 +105,15 @@ public class JMXQueryTest
         runCommand("-U service:jmx:some://domain.com -O foo:bar=x -M test");
         verify(mBeanServerConnection).invoke(ObjectName.getInstance("foo:bar=x"), "test", null, null);
         assertResponseWas(0, "JMX OK - null=null");
+    }
+
+    @Test(description = "Test credentials used.")
+    public void testCredentialsUsed() throws IOException
+    {
+        runCommand("-U service:jmx:some://domain.com -O foo:bar=x -A test -username duke -password java_rulez");
+        @SuppressWarnings("unchecked") ArgumentCaptor<Map<String, ?>> envCaptor
+                = (ArgumentCaptor<Map<String,?>>) (ArgumentCaptor<?>) ArgumentCaptor.forClass(Map.class);
+        verify(jmxProvider).getConnector(any(JMXServiceURL.class), envCaptor.capture());
+        assertEquals(envCaptor.getValue().get(CREDENTIALS), new String[] { "duke", "java_rulez"});
     }
 }
