@@ -1,12 +1,12 @@
 package jmxquery;
 
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -17,12 +17,10 @@ import java.io.PrintStream;
 import java.util.Map;
 
 import static javax.management.remote.JMXConnector.CREDENTIALS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Tests for the JMXQuery class.
@@ -108,12 +106,29 @@ public class JMXQueryTest
     }
 
     @Test(description = "Test credentials used.")
+    @SuppressWarnings({"unchecked", "RedundantCast"})
     public void testCredentialsUsed() throws IOException
     {
         runCommand("-U service:jmx:some://domain.com -O foo:bar=x -A test -username duke -password java_rulez");
-        @SuppressWarnings("unchecked") ArgumentCaptor<Map<String, ?>> envCaptor
+        ArgumentCaptor<Map<String, ?>> envCaptor
                 = (ArgumentCaptor<Map<String,?>>) (ArgumentCaptor<?>) ArgumentCaptor.forClass(Map.class);
         verify(jmxProvider).getConnector(any(JMXServiceURL.class), envCaptor.capture());
         assertEquals(envCaptor.getValue().get(CREDENTIALS), new String[] { "duke", "java_rulez"});
+    }
+
+    @Test(description = "Default value if attribute doesn't exist.")
+    public void testDefaultValue() throws Exception
+    {
+        when(mBeanServerConnection.getAttribute(any(ObjectName.class), anyString())).thenThrow(new InstanceNotFoundException());
+        runCommand("-U service:jmx:some://domain.com -O foo:bar=x -A baz -default -1");
+        assertResponseWas(0, "JMX OK - baz=-1 | baz=-1");
+    }
+
+    @Test(description = "Default value if attribute doesn't exist.")
+    public void testDefaultValueNotNeeded() throws Exception
+    {
+        when(mBeanServerConnection.getAttribute(any(ObjectName.class), anyString())).thenReturn(2);
+        runCommand("-U service:jmx:some://domain.com -O foo:bar=x -A baz -default -1");
+        assertResponseWas(0, "JMX OK - baz=2 | baz=2");
     }
 }

@@ -2,6 +2,7 @@ package jmxquery;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.management.OperationsException;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
@@ -39,6 +40,8 @@ public class JMXQuery
     private String methodName;
 	private String object;
 	private String username, password;
+
+    private Object defaultValue;
 	
 	private Object checkData;
 	private Object infoData;
@@ -222,9 +225,20 @@ public class JMXQuery
 
 	private void execute() throws Exception
     {
-		Object value = attributeName != null
-                ? connection.getAttribute(new ObjectName(object), attributeName)
-                : connection.invoke(new ObjectName(object), methodName, null, null);
+        Object value;
+        try {
+            value = attributeName != null
+                           ? connection.getAttribute(new ObjectName(object), attributeName)
+                           : connection.invoke(new ObjectName(object), methodName, null, null);
+        }
+        catch(OperationsException e)
+        {
+            if(defaultValue != null)
+                value = defaultValue;
+            else
+                throw e;
+        }
+
 		if(value instanceof CompositeDataSupport) {
             if(attributeKey ==null) {
                 throw new ParseError("Attribute key is null for composed data "+object);
@@ -240,13 +254,14 @@ public class JMXQuery
                     ? value :
                     connection.getAttribute(new ObjectName(object), infoAttribute);
 			if(infoKey !=null && (infoValue instanceof CompositeDataSupport) && verbatim<4){
-                infoData = ((CompositeDataSupport) value).get(infoKey);
+                infoData = ((CompositeDataSupport) value).get(infoKey); // todo: Possible bug? value <=> infoValue
 			}
             else {
 				infoData = infoValue;
 			}
 		}
 	}
+
 
 	private void parse(String[] args) throws ParseError
 	{
@@ -294,6 +309,16 @@ public class JMXQuery
                 else if(option.equals("-password")) {
 					password = args[++i];
 				}
+                else if(option.equals("-default")) {
+                    String strValue = args[++i];
+                    try {
+                        defaultValue = Long.valueOf(strValue);
+                    }
+                    catch(NumberFormatException e)
+                    {
+                        defaultValue = strValue;
+                    }
+                }
 			}
 			
             if(url == null || object == null || (attributeName == null && methodName == null))
