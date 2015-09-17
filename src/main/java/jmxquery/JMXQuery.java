@@ -11,6 +11,8 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 /**
  * 
@@ -36,9 +38,9 @@ public class JMXQuery
 	private String warning, critical;
 	private String infoAttribute;
 	private String infoKey;
-    private String methodName;
-	private JMXObjectQuery objectQuery;
+	private JMXObjectQuery objectQuery = new JMXObjectQuery();
 	private String username, password;
+	private ArrayList<JMXObjectQuery> queries = new ArrayList<JMXObjectQuery>();
 
     private Object defaultValue;
 	
@@ -65,9 +67,14 @@ public class JMXQuery
         try {
             parse(args);
             connect();
-            execute(objectQuery);
-            return report(out, objectQuery);
-
+	    for (final JMXObjectQuery query : queries) {
+		execute(query);
+		int status = report(out, query);
+		if (status != RETURN_OK) {
+			return status;
+		}	
+	    }
+	    return RETURN_OK;
         }
         catch(Exception ex) {
             return report(ex, out);
@@ -115,6 +122,7 @@ public class JMXQuery
 
     private int report(Exception ex, PrintStream out)
 	{
+		ex.printStackTrace();
 		if(ex instanceof ParseError){
 			out.print(UNKNOWN_STRING+" ");
 			reportException(ex, out);		
@@ -281,6 +289,14 @@ public class JMXQuery
                 else if(option.equals("-O")) {
 					objectQuery.setObject(args[++i]);
 				}
+		else if(option.equals("-X")) {
+			final String toParse = args[++i];
+			String[] queryStrings = toParse.trim().split(Pattern.quote(";"));
+			for (String q : queryStrings) {
+				String[] parts = q.split(Pattern.quote("|"));
+				queries.add(new JMXObjectQuery(parts[0].trim(), parts[1].trim(), parts[2].trim()));			
+			}
+		}
                 else if(option.equals("-A")) {
 					objectQuery.setAttributeName(args[++i]);
 				}
@@ -329,6 +345,8 @@ public class JMXQuery
         catch(Exception e) {
 			throw new ParseError(e);
 		}
+
+		queries.add(objectQuery);
 	}
 
 
