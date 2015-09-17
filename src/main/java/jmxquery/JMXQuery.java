@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-
 /**
  * 
  * JMXQuery is used for local or remote request of JMX attributes
@@ -35,10 +34,10 @@ public class JMXQuery
 	private JMXConnector connector;
 	private MBeanServerConnection connection;
 	private String warning, critical;
-	private String attributeName, infoAttribute;
-	private String attributeKey, infoKey;
+	private String infoAttribute;
+	private String infoKey;
     private String methodName;
-	private String object;
+	private JMXObjectQuery objectQuery;
 	private String username, password;
 
     private Object defaultValue;
@@ -66,8 +65,8 @@ public class JMXQuery
         try {
             parse(args);
             connect();
-            execute();
-            return report(out);
+            execute(objectQuery);
+            return report(out, objectQuery);
 
         }
         catch(Exception ex) {
@@ -134,7 +133,7 @@ public class JMXQuery
     {
         out.print(verbatim < 2
                 ? rootCause(ex).getMessage()
-                : ex.getMessage() + " connecting to " + object + " by URL " + url);
+                : ex.getMessage() + " connecting to " + objectQuery.getObject() + " by URL " + url);
 
 		if(verbatim>=3)		
 			ex.printStackTrace(out);
@@ -147,7 +146,7 @@ public class JMXQuery
     }
 
 
-	private int report(PrintStream out)
+	private int report(PrintStream out, JMXObjectQuery query)
 	{
 		int status;
 		if(critical != null && compare( critical )){
@@ -164,16 +163,16 @@ public class JMXQuery
         boolean shown = false;
         if(infoData==null || verbatim>=2){
             out.print(' ');
-            if(attributeKey !=null) {
-                out.print(attributeName +'.'+ attributeKey +"="+checkData);
+            if(query.hasAttributeKey()) {
+                out.print(query.getAttributeName() +'.'+ query.getAttributeKey() +"="+checkData);
                 if ( checkData instanceof Number) {
-                    out.print (" | "+ attributeName +'.'+ attributeKey +"="+checkData);
+                    out.print (" | "+ query.getAttributeName() +'.'+ query.getAttributeKey() +"="+checkData);
                 }
             }
             else {
-                out.print(attributeName +"="+checkData);
+                out.print(query.getAttributeName() +"="+checkData);
                 if ( checkData instanceof Number) {
-                    out.print (" | "+ attributeName +"="+checkData);
+                    out.print (" | "+ query.getAttributeName() +"="+checkData);
                 }
                 shown=true;
             }
@@ -223,13 +222,16 @@ public class JMXQuery
 	}
 
 
-	private void execute() throws Exception
+	private void execute(JMXObjectQuery query) throws Exception
     {
         Object value;
+	final String object = query.getObject();
+	final String attributeName = query.getAttributeName();
+	final String attributeKey = query.getAttributeKey();
         try {
-            value = attributeName != null
-                           ? connection.getAttribute(new ObjectName(object), attributeName)
-                           : connection.invoke(new ObjectName(object), methodName, null, null);
+            value = query.isAttributeQuery()
+                           ? connection.getAttribute(new ObjectName(query.getObject()), query.getAttributeName())
+                           : connection.invoke(new ObjectName(query.getObject()), query.getMethodName(), null, null);
         }
         catch(OperationsException e)
         {
@@ -243,7 +245,7 @@ public class JMXQuery
             if(attributeKey ==null) {
                 throw new ParseError("Attribute key is null for composed data "+object);
             }
-            checkData = ((CompositeDataSupport) value).get(attributeKey);
+            checkData = ((CompositeDataSupport) value).get(query.getAttributeKey());
 		}
         else {
 			checkData = value;
@@ -277,10 +279,10 @@ public class JMXQuery
 					url = args[++i];
 				}
                 else if(option.equals("-O")) {
-					object = args[++i];
+					objectQuery.setObject(args[++i]);
 				}
                 else if(option.equals("-A")) {
-					attributeName = args[++i];
+					objectQuery.setAttributeName(args[++i]);
 				}
                 else if(option.equals("-I")) {
 					infoAttribute = args[++i];
@@ -289,10 +291,10 @@ public class JMXQuery
 					infoKey = args[++i];
 				}
                 else if(option.equals("-K")) {
-					attributeKey = args[++i];
+					objectQuery.setAttributeKey(args[++i]);
 				}
                 else if(option.equals("-M")) {
-                    methodName = args[++i];
+                    objectQuery.setMethodName(args[++i]);
                 }
                 else if(option.startsWith("-v")) {
 					verbatim = option.length()-1;
@@ -321,7 +323,7 @@ public class JMXQuery
                 }
 			}
 			
-            if(url == null || object == null || (attributeName == null && methodName == null))
+            if(url == null || objectQuery.getObject() == null || (objectQuery.getAttributeName() == null && objectQuery.getMethodName() == null))
                 throw new Exception("Required options not specified");
 		}
         catch(Exception e) {
