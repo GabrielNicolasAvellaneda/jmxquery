@@ -294,7 +294,11 @@ public class JMXQuery
 			String[] queryStrings = toParse.trim().split(Pattern.quote(";"));
 			for (String q : queryStrings) {
 				String[] parts = q.split(Pattern.quote("|"));
-				queries.add(new JMXObjectQuery(parts[0].trim(), parts[1].trim(), parts[2].trim()));			
+				String attributeKey = null;
+				if (parts.length >= 3) {
+					attributeKey = parts[2].trim();
+				}
+				queries.add(new JMXObjectQuery(parts[0].trim(), parts[1].trim(), attributeKey));			
 			}
 		}
                 else if(option.equals("-A")) {
