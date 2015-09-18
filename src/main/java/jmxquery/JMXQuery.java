@@ -168,31 +168,9 @@ public class JMXQuery
 			out.print(OK_STRING);
 		}
 
-        boolean shown = false;
-        if(infoData==null || verbatim>=2){
-            out.print(' ');
-            if(query.hasAttributeKey()) {
-                out.print(query.getAttributeName() +'.'+ query.getAttributeKey() +"="+checkData);
-                if ( checkData instanceof Number) {
-                    out.print (" | "+ query.getAttributeName() +'.'+ query.getAttributeKey() +"="+checkData);
-                }
-            }
-            else {
-                out.print(query.getAttributeName() +"="+checkData);
-                if ( checkData instanceof Number) {
-                    out.print (" | "+ query.getAttributeName() +"="+checkData);
-                }
-                shown=true;
-            }
-        }
+	    	out.print(' ');
+		out.print(query.toString() + " " + checkData);
 
-		if(!shown && infoData!=null){
-			if(infoData instanceof CompositeDataSupport)
-				report((CompositeDataSupport)infoData, out);
-			else
-				out.print(infoData.toString());
-		}
-		
 		out.println();
 		return status;
 	}
@@ -293,12 +271,19 @@ public class JMXQuery
 			final String toParse = args[++i];
 			String[] queryStrings = toParse.trim().split(Pattern.quote(";"));
 			for (String q : queryStrings) {
-				String[] parts = q.split(Pattern.quote("|"));
+				// TODO: Replace this parsing with a regex.
+				String[] parts = q.split(Pattern.quote(":"));
+			       	String domain = parts[0];
+				String objectPath = parts[1];
+				parts = objectPath.split(Pattern.quote("."));
+				String objectName = domain + ":" + parts[0]; 
+				String attributeName = parts[1].trim();
 				String attributeKey = null;
 				if (parts.length >= 3) {
 					attributeKey = parts[2].trim();
 				}
-				queries.add(new JMXObjectQuery(parts[0].trim(), parts[1].trim(), attributeKey));			
+				System.out.println(objectName + "." + attributeName + "." + attributeKey);
+				queries.add(new JMXObjectQuery(objectName.trim(), attributeName, attributeKey));			
 			}
 		}
                 else if(option.equals("-A")) {

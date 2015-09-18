@@ -73,5 +73,14 @@ public class JMXObjectQuery
 	{
 		return this.attributeName != null;
 	}
+
+	public String toString()
+       	{
+		if (this.isAttributeQuery()) {
+			return String.format("%s.%s", object, attributeName) + (hasAttributeKey()? "." + attributeKey : "");
+		}
+
+		return String.format("%s.%s()", object, methodName); 
+	}
 }
 
