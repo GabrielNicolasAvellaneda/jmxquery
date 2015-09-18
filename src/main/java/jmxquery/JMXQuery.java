@@ -282,7 +282,6 @@ public class JMXQuery
 				if (parts.length >= 3) {
 					attributeKey = parts[2].trim();
 				}
-				System.out.println(objectName + "." + attributeName + "." + attributeKey);
 				queries.add(new JMXObjectQuery(objectName.trim(), attributeName, attributeKey));			
 			}
 		}
